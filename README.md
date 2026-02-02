@@ -1,6 +1,6 @@
 # 🎵 R9Club Store - Digital Asset Platform
 
-![Project Banner](https://via.placeholder.com/1200x400/0f172a/38bdf8?text=R9Club+Store+NextJS)
+![Project Banner](https://www.r9clubradio.com/assets/images/logo.png?v=1)
 
 BADGES_PLACEHOLDER
 
