@@ -1,0 +1,364 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionType {
+  TOPUP
+  PURCHASE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String?
+  name          String?
+  image         String?
+  role          Role     @default(USER)
+  creditBalance Float    @default(0) @map("credit_balance")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orders               Order[]
+  cartItems            CartItem[]
+  transactions         Transaction[] @relation("UserTransactions")
+  approvedTransactions Transaction[] @relation("ApprovedTransactions")
+  downloads            Download[]
+  topupTransactions    TopupTransaction[]
+  accounts             Account[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  image       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  title          String
+  artist         String
+  description    String?  @db.Text
+  price          Float
+  coverImage     String   @map("cover_image")
+  sampleAudioUrl String   @map("sample_audio_url")
+  fullAudioUrl   String   @map("full_audio_url")
+  categoryId     String?  @map("category_id")
+  isActive       Boolean  @default(true) @map("is_active")
+  isFeatured     Boolean  @default(false) @map("is_featured")
+  playCount      Int      @default(0) @map("play_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category   Category?   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  downloads  Download[]
+
+  @@map("products")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String      @map("user_id")
+  totalAmount Float       @map("total_amount")
+  status      OrderStatus @default(PENDING)
+  email       String?     // Email entered at checkout (for guest/OTP)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  price     Float
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model Transaction {
+  id           String            @id @default(cuid())
+  userId       String            @map("user_id")
+  type         TransactionType
+  amount       Float
+  status       TransactionStatus @default(PENDING)
+  slipImageUrl String?           @map("slip_image_url")
+  adminNote    String?           @map("admin_note") @db.Text
+  approvedById String?           @map("approved_by")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  user       User  @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy User? @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+
+  @@map("transactions")
+}
+
+model Download {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  productId     String   @map("product_id")
+  secureToken   String   @unique @map("secure_token")
+  expiresAt     DateTime @map("expires_at")
+  downloadCount Int      @default(0) @map("download_count")
+  verifiedEmail String?  @map("verified_email")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("downloads")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  type      String   // "checkout" | "download"
+  relatedId String?  @map("related_id")
+  expiresAt DateTime @map("expires_at")
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, otp])
+  @@map("email_verifications")
+}
+
+// Site Settings - Key-Value store for configuration
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  group     String   @default("general") // general, seo, social, payment, system
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+// Media Library - Store uploaded files
+model Media {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  type      String   @default("image") // image, audio, video
+  size      Int      @default(0)
+  width     Int?
+  height    Int?
+  alt       String?
+  uploadedBy String?  @map("uploaded_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("media")
+}
+
+// Hero Slider - Promotional banners
+model Slide {
+  id          String   @id @default(cuid())
+  title       String?
+  description String?  @db.Text
+  imageUrl    String   @map("image_url")
+  linkUrl     String?  @map("link_url")
+  buttonText  String?  @map("button_text")
+  order       Int      @default(0)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("slides")
+}
+
+// Announcements - Notification bar messages
+model Announcement {
+  id        String   @id @default(cuid())
+  message   String   @db.Text
+  type      String   @default("info") // info, warning, success, error
+  linkUrl   String?  @map("link_url")
+  isActive  Boolean  @default(true) @map("is_active")
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("announcements")
+}
+
+// Plans - Discord/Membership plans
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  price       Float
+  period      String   @default("month") // month, year, lifetime
+  icon        String?
+  color       String   @default("#facc15") // yellow, blue, etc.
+  features    String   @db.Text // JSON array of features
+  buttonText  String?  @map("button_text")
+  buttonUrl   String?  @map("button_url")
+  isPopular   Boolean  @default(false) @map("is_popular")
+  isActive    Boolean  @default(true) @map("is_active")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("plans")
+}
+
+// Team Members - Our team section
+model TeamMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  image       String?
+  description String?  @db.Text
+  socialLinks String?  @map("social_links") @db.Text // JSON object {youtube, facebook, discord}
+  isActive    Boolean  @default(true) @map("is_active")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("team_members")
+}
+
+// FAQ - Frequently Asked Questions
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String   @db.Text
+  answer    String   @db.Text
+  category  String   @default("general") // general, payment, download, etc.
+  icon      String?
+  isActive  Boolean  @default(true) @map("is_active")
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("faqs")
+}
+
+// Payment Settings - Slip2Go API Configuration
+model PaymentSetting {
+  id               String   @id @default(cuid())
+  provider         String   @default("slip2go") // slip2go, slipok, etc.
+  apiKey           String?  @map("api_key") @db.Text
+  apiSecret        String?  @map("api_secret") @db.Text
+  bankCode         String?  @map("bank_code") // KBANK, SCB, etc.
+  bankAccountNo    String?  @map("bank_account_no")
+  bankAccountName  String?  @map("bank_account_name")
+  promptpayId      String?  @map("promptpay_id") // Phone or ID number
+  promptpayName    String?  @map("promptpay_name")
+  qrCodeImage      String?  @map("qr_code_image")
+  minAmount        Float    @default(10) @map("min_amount")
+  maxAmount        Float    @default(100000) @map("max_amount")
+  checkDuplicate   Boolean  @default(true) @map("check_duplicate")
+  checkReceiver    Boolean  @default(true) @map("check_receiver")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_settings")
+}
+
+// Topup Transaction - บันทึกการเติมเงิน
+model TopupTransaction {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount           Float
+  transactionRef   String?  @map("transaction_ref")
+  senderName       String?  @map("sender_name")
+  senderAccountNo  String?  @map("sender_account_no")
+  receiverName     String?  @map("receiver_name")
+  receiverAccountNo String? @map("receiver_account_no")
+  bankCode         String?  @map("bank_code")
+  slipImage        String?  @map("slip_image") @db.Text
+  status           String   @default("PENDING") // PENDING, COMPLETED, FAILED, REJECTED
+  verifiedAt       DateTime? @map("verified_at")
+  note             String?  @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("topup_transactions")
+}
