@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // GET - List all team members (public)
 export async function GET() {
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest) {
         order: data.order || 0,
       },
     });
+
+    revalidatePath('/admin/team');
+    revalidatePath('/');
 
     return NextResponse.json(member);
   } catch (error) {

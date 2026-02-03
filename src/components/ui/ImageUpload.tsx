@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { XMarkIcon, PhotoIcon, ArrowUpTrayIcon, TrashIcon, CheckIcon } from '@heroicons/react/24/outline';
 import swal from '@/lib/swal';
+import { useSession } from 'next-auth/react';
 
 interface Media {
   id: string;
@@ -23,7 +24,7 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ value, onChange, label, placeholder, className = '', fit = 'contain' }: ImageUploadProps) {
-  // ... (state vars same as before)
+  const { data: session } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
@@ -196,60 +197,67 @@ export function ImageUpload({ value, onChange, label, placeholder, className = '
               </button>
             </div>
 
-            {/* Gallery */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : media.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {media.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer group transition-all ${
-                        selectedImage === item.url
-                          ? 'border-primary-500 ring-2 ring-primary-500/50'
-                          : 'border-white/10 hover:border-white/30'
-                      }`}
-                      onClick={() => setSelectedImage(item.url)}
-                    >
-                      <Image
-                        src={item.url}
-                        alt={item.alt || item.filename}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-
-                      {/* Selected Check */}
-                      {selectedImage === item.url && (
-                        <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
-                          <CheckIcon className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-
-                      {/* Delete Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(item.id);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            {/* Gallery - Only show for ADMIN */}
+            {session?.user?.role === 'ADMIN' ? (
+              <div className="flex-1 overflow-y-auto p-6">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : media.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {media.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer group transition-all ${
+                          selectedImage === item.url
+                            ? 'border-primary-500 ring-2 ring-primary-500/50'
+                            : 'border-white/10 hover:border-white/30'
+                        }`}
+                        onClick={() => setSelectedImage(item.url)}
                       >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <PhotoIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>ยังไม่มีรูปภาพ</p>
-                  <p className="text-sm mt-1">กดอัพโหลดเพื่อเพิ่มรูปภาพ</p>
-                </div>
-              )}
-            </div>
+                        <Image
+                          src={item.url}
+                          alt={item.alt || item.filename}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+
+                        {/* Selected Check */}
+                        {selectedImage === item.url && (
+                          <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center">
+                            <CheckIcon className="w-4 h-4 text-white" />
+                          </div>
+                        )}
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(item.id);
+                          }}
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <PhotoIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>ยังไม่มีรูปภาพ</p>
+                    <p className="text-sm mt-1">กดอัพโหลดเพื่อเพิ่มรูปภาพ</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-gray-500">
+                <PhotoIcon className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                <p>กดปุ่ม &quot;อัพโหลดรูปใหม่&quot; ด้านบนเพื่อเพิ่มรูปภาพ</p>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3">

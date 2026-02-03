@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // GET - ดึงข้อมูลการตั้งค่าการชำระเงิน
 export async function GET() {
@@ -94,6 +95,8 @@ export async function PUT(request: NextRequest) {
         },
       });
     }
+
+    revalidatePath('/admin/payment-settings');
 
     return NextResponse.json({
       ...setting,

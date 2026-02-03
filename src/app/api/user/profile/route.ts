@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // PUT - Update user profile
 export async function PUT(request: NextRequest) {
@@ -17,6 +18,8 @@ export async function PUT(request: NextRequest) {
       where: { id: session.user.id },
       data: { name, image },
     });
+
+    revalidatePath('/profile');
 
     return NextResponse.json({
       id: user.id,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // PUT - Update FAQ
 export async function PUT(
@@ -28,6 +29,9 @@ export async function PUT(
       },
     });
 
+    revalidatePath('/admin/faqs');
+    revalidatePath('/');
+
     return NextResponse.json(faq);
   } catch (error) {
     console.error('Update FAQ error:', error);
@@ -50,6 +54,9 @@ export async function DELETE(
     await prisma.fAQ.delete({
       where: { id: params.id },
     });
+
+    revalidatePath('/admin/faqs');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

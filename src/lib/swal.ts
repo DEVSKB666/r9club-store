@@ -1,6 +1,8 @@
 // SweetAlert2 Utility with Dark Theme
 // Falls back to native methods if sweetalert2 is not installed
 
+import { playSuccess, playError, playNotification } from './sounds';
+
 let Swal: any = null;
 let Toast: any = null;
 
@@ -25,30 +27,41 @@ try {
 
 const nativeFallback = {
   success: (message: string) => {
+    playSuccess();
     console.log('✅ ' + message);
   },
   error: (message: string) => {
+    playError();
     console.error('❌ ' + message);
   },
   info: (message: string) => {
+    playNotification();
     console.info('ℹ️ ' + message);
   },
   warning: (message: string) => {
+    playNotification();
     console.warn('⚠️ ' + message);
   },
   confirm: async (title: string, _text?: string) => {
+    playNotification();
     return confirm(title);
   },
   confirmDelete: async (itemName?: string) => {
+    playNotification();
     return confirm(itemName ? `ต้องการลบ "${itemName}" ใช่หรือไม่?` : 'ยืนยันการลบ?');
   },
   loading: (_title?: string) => {},
   close: () => {},
+  fire: async (_options: any) => {
+    console.log('🔥 fire called with', _options);
+    return { isConfirmed: true };
+  },
 };
 
 export const swal = Swal ? {
   // Success toast
   success: (message: string) => {
+    playSuccess();
     Toast.fire({
       icon: 'success',
       title: message,
@@ -58,6 +71,7 @@ export const swal = Swal ? {
 
   // Error toast
   error: (message: string) => {
+    playError();
     Toast.fire({
       icon: 'error',
       title: message,
@@ -67,6 +81,7 @@ export const swal = Swal ? {
 
   // Info toast
   info: (message: string) => {
+    playNotification();
     Toast.fire({
       icon: 'info',
       title: message,
@@ -76,6 +91,7 @@ export const swal = Swal ? {
 
   // Warning toast
   warning: (message: string) => {
+    playNotification();
     Toast.fire({
       icon: 'warning',
       title: message,
@@ -85,6 +101,7 @@ export const swal = Swal ? {
 
   // Confirm dialog
   confirm: async (title: string, text?: string) => {
+    playNotification();
     const result = await Swal.fire({
       title,
       text,
@@ -107,6 +124,7 @@ export const swal = Swal ? {
 
   // Delete confirm dialog
   confirmDelete: async (itemName?: string) => {
+    playNotification();
     const result = await Swal.fire({
       title: 'ยืนยันการลบ?',
       text: itemName ? `คุณต้องการลบ "${itemName}" ใช่หรือไม่?` : 'การดำเนินการนี้ไม่สามารถย้อนกลับได้',
@@ -166,3 +184,4 @@ export const swal = Swal ? {
 } : nativeFallback;
 
 export default swal;
+

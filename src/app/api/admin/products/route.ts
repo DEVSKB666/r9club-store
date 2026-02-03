@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { sendDiscordNotification } from '@/lib/notifications/discord';
+import { revalidatePath } from 'next/cache';
 
 // GET - List all products (admin)
 export async function GET() {
@@ -55,6 +56,9 @@ export async function POST(request: NextRequest) {
         productCover: product.coverImage,
       },
     }).catch(console.error);
+
+    revalidatePath('/admin/products');
+    revalidatePath('/');
 
     return NextResponse.json(product);
   } catch (error) {

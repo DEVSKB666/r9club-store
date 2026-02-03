@@ -13,10 +13,60 @@ interface TopUpEmailOptions {
   status: 'APPROVED' | 'REJECTED';
 }
 
+interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+}
+
 // Using Resend API for sending emails
 // Set RESEND_API_KEY in .env to enable email notifications
 
 import { prisma } from '@/lib/prisma';
+
+// Generic send email function
+export async function sendEmail(options: SendEmailOptions) {
+  // Try getting key from DB first, then Env
+  const setting = await prisma.siteSetting.findUnique({
+    where: { key: 'resend_api_key' },
+  });
+  
+  const apiKey = setting?.value || process.env.RESEND_API_KEY;
+  
+  if (!apiKey) {
+    console.warn('Resend API key not configured, skipping email');
+    return;
+  }
+
+  const { to, subject, html } = options;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'R9Club Radio <noreply@r9clubradio.com>',
+        to,
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('Resend API error:', error);
+      throw new Error(`Resend API failed: ${response.status}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Email send error:', error);
+    throw error;
+  }
+}
 
 export async function sendOrderConfirmationEmail(options: OrderEmailOptions) {
   // Try getting key from DB first, then Env

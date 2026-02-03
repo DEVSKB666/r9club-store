@@ -328,7 +328,7 @@ export default function TeamPage() {
 
       {!isLoading && members.length === 0 && !isAdding && (
         <div className="text-center py-12 text-gray-500">
-          ยังไม่มีสมาชิกในทีม กดปุ่ม "เพิ่มสมาชิกใหม่" เพื่อเริ่มต้น
+          ยังไม่มีสมาชิกในทีม กดปุ่ม &quot;เพิ่มสมาชิกใหม่&quot; เพื่อเริ่มต้น
         </div>
       )}
     </div>

@@ -20,8 +20,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ไม่มีสินค้าในตะกร้า' }, { status: 400 });
     }
 
-    // Calculate total
-    const totalAmount = items.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+    // Verify items and calculate total from database
+    const productIds = items.map((item: any) => item.productId);
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+    });
+
+    if (dbProducts.length !== items.length) {
+      return NextResponse.json({ error: 'สินค้าบางรายการไม่พร้อมจำหน่าย' }, { status: 400 });
+    }
+
+    const totalAmount = dbProducts.reduce((sum, product) => sum + product.price, 0);
 
     // Get user and check credit
     const user = await prisma.user.findUnique({
@@ -42,9 +51,9 @@ export async function POST(request: NextRequest) {
           status: 'COMPLETED',
           email: verifiedEmail || null,
           items: {
-            create: items.map((item: { productId: string; price: number }) => ({
-              productId: item.productId,
-              price: item.price,
+            create: dbProducts.map((product) => ({
+              productId: product.id,
+              price: product.price,
             })),
           },
         },
@@ -71,7 +80,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create download links for each product
-      for (const item of items) {
+      for (const product of dbProducts) {
         const token = randomBytes(32).toString('hex');
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
@@ -79,7 +88,7 @@ export async function POST(request: NextRequest) {
         await tx.download.create({
           data: {
             userId: session.user.id,
-            productId: item.productId,
+            productId: product.id,
             secureToken: token,
             expiresAt,
             verifiedEmail: verifiedEmail || null,

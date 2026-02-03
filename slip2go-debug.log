@@ -1,0 +1,24 @@
+2026-02-02T14:21:35.135Z: --- Starting Dynamic Host Probe ---
+2026-02-02T14:21:35.136Z: Probing host: https://api.slip2go.com/api/account/info
+2026-02-02T14:21:35.251Z: Probe status: 404
+2026-02-02T14:21:35.251Z: Probing host: https://app.slip2go.com/api/account/info
+2026-02-02T14:21:35.377Z: Probe status: 404
+2026-02-02T14:21:35.377Z: Probing host: https://slip2go.com/api/account/info
+2026-02-02T14:21:35.504Z: Probe status: 404
+2026-02-02T14:21:35.505Z: Testing endpoints: ["https://connect.slip2go.com/api/verify-slip/qr-image/info"]
+2026-02-02T14:21:35.505Z: Trying Slip2Go API: https://connect.slip2go.com/api/verify-slip/qr-image/info
+2026-02-02T14:21:36.092Z: Status: 201 Created
+2026-02-02T14:21:36.093Z: Body Preview: {"code":"200501","message":"Slip is Duplicated.","data":{"transRef":"202602021pT9cSsieTg2NfMYw","dateTime":"2026-02-02T05:39:23+07:00","amount":20,"ref1":"","ref2":"","ref3":"","receiver":{"account":{
+2026-02-02T14:21:36.094Z: Hit valid endpoint: https://connect.slip2go.com/api/verify-slip/qr-image/info
+2026-02-02T14:21:44.516Z: --- Starting Dynamic Host Probe ---
+2026-02-02T14:21:44.517Z: Probing host: https://api.slip2go.com/api/account/info
+2026-02-02T14:21:44.639Z: Probe status: 404
+2026-02-02T14:21:44.640Z: Probing host: https://app.slip2go.com/api/account/info
+2026-02-02T14:21:44.739Z: Probe status: 404
+2026-02-02T14:21:44.739Z: Probing host: https://slip2go.com/api/account/info
+2026-02-02T14:21:44.855Z: Probe status: 404
+2026-02-02T14:21:44.856Z: Testing endpoints: ["https://connect.slip2go.com/api/verify-slip/qr-image/info"]
+2026-02-02T14:21:44.856Z: Trying Slip2Go API: https://connect.slip2go.com/api/verify-slip/qr-image/info
+2026-02-02T14:21:45.503Z: Status: 201 Created
+2026-02-02T14:21:45.504Z: Body Preview: {"code":"200501","message":"Slip is Duplicated.","data":{"transRef":"202602021pT9cSsieTg2NfMYw","dateTime":"2026-02-02T05:39:23+07:00","amount":20,"ref1":"","ref2":"","ref3":"","receiver":{"account":{
+2026-02-02T14:21:45.505Z: Hit valid endpoint: https://connect.slip2go.com/api/verify-slip/qr-image/info

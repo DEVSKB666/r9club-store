@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ImageUpload } from '@/components/ui/ImageUpload';
@@ -72,8 +73,19 @@ export default function RegisterPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
+
+
+
             {settings.site_logo && settings.site_logo !== '/logo.png' ? (
-              <img src={settings.site_logo} alt={settings.site_name} className="w-12 h-12 rounded-xl object-contain" />
+              <div className="relative w-12 h-12">
+                <Image 
+                  src={settings.site_logo} 
+                  alt={settings.site_name} 
+                  fill
+                  className="rounded-xl object-contain"
+                  sizes="48px"
+                />
+              </div>
             ) : (
               <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
                 <MusicalNoteIcon className="w-7 h-7 text-white" />

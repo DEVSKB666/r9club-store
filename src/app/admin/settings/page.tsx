@@ -79,6 +79,8 @@ const settingLabels: Record<string, string> = {
   discord_notify_admin_credit: 'แจ้งเตือนเมื่อ Admin เพิ่มเครดิต',
   discord_notify_upload: 'แจ้งเตือนเมื่อมีการอัพโหลด',
   discord_notify_product_add: 'แจ้งเตือนเมื่อเพิ่มสินค้าใหม่',
+  discord_bot_token: 'Discord Bot Token (สำหรับ Live Chat)',
+  discord_ticket_channel_id: 'Ticket Channel ID (ห้องรับเรื่อง)',
   // Google Drive
   google_service_account_email: 'Service Account Email (Legacy)',
   google_folder_id: 'Folder ID',
@@ -342,7 +344,13 @@ export default function SettingsPage() {
       <div className="rounded-2xl bg-gray-900/50 border border-white/10 p-6">
         <div className="grid md:grid-cols-2 gap-6">
           {getSettingsForTab(activeTab)
-            .filter(([key]) => !key.startsWith('google_') && !key.startsWith('smtp_') && !key.startsWith('resend_'))
+            .filter(([key]) => 
+              !key.startsWith('google_') && 
+              !key.startsWith('smtp_') && 
+              !key.startsWith('resend_') &&
+              key !== 'discord_bot_token' &&
+              key !== 'discord_ticket_channel_id'
+            )
             .map(([key, { value }]) => 
             renderField(key, value)
           )}
@@ -456,7 +464,21 @@ export default function SettingsPage() {
       )}
 
       {activeTab === 'discord' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+            <h3 className="text-lg font-bold text-indigo-400 mb-4 flex items-center gap-2">
+              <ChatBubbleLeftRightIcon className="w-5 h-5" />
+              ตั้งค่า Live Chat (Discord Ticket)
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+               {renderField('discord_bot_token', settings['discord_bot_token']?.value || '')}
+               {renderField('discord_ticket_channel_id', settings['discord_ticket_channel_id']?.value || '')}
+            </div>
+            <p className="mt-4 text-sm text-gray-400">
+              * ต้องใส่ Token และ ID ให้ถูกต้องเพื่อให้ระบบแชทหน้าเว็บทำงานได้
+            </p>
+          </div>
+
           <div className="p-4 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/20 text-sm text-[#5865F2]">
             <strong>วิธีสร้าง Discord Webhook:</strong>
             <ol className="list-decimal list-inside mt-2 space-y-1 text-gray-300">

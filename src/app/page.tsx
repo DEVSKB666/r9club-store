@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { ProductCard } from '@/components/products/ProductCard';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MusicalNoteIcon, SparklesIcon, FireIcon } from '@heroicons/react/24/outline';
 import { getSettings } from '@/lib/settings';
 import { HeroSliderWrapper } from '@/components/home/HeroSliderWrapper';
@@ -41,8 +42,25 @@ export default async function HomePage() {
     },
   });
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'MusicStore',
+    name: settings.site_name || 'R9 Club',
+    description: settings.site_description,
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://r9club.com',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${process.env.NEXT_PUBLIC_APP_URL || 'https://r9club.com'}/products?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Slider */}
       <section className="max-w-7xl mx-auto px-4 pt-6">
         <HeroSliderWrapper />
@@ -82,11 +100,15 @@ export default async function HomePage() {
                   {/* Icon */}
                   <div className="mb-4">
                     {category.image ? (
-                      <img 
-                        src={category.image} 
-                        alt={category.name}
-                        className="w-16 h-16 md:w-20 md:h-20 object-contain filter brightness-0 invert"
-                      />
+                      <div className="relative w-16 h-16 md:w-20 md:h-20">
+                        <Image
+                          src={category.image}
+                          alt={category.name}
+                          fill
+                          sizes="80px"
+                          className="object-contain filter brightness-0 invert"
+                        />
+                      </div>
                     ) : (
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/20 flex items-center justify-center">
                         <MusicalNoteIcon className="w-10 h-10 text-white" />

@@ -61,11 +61,6 @@ export function ProductForm({ categories, product }: ProductFormProps) {
       return;
     }
 
-    if (!formData.sampleAudioUrl) {
-      setError('กรุณาอัพโหลดไฟล์เสียงตัวอย่าง');
-      setIsLoading(false);
-      return;
-    }
 
     if (!formData.fullAudioUrl) {
       setError('กรุณาอัพโหลดไฟล์เสียงฉบับเต็ม');
@@ -183,7 +178,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           <AudioUpload
             value={formData.sampleAudioUrl}
             onChange={(url) => setFormData({ ...formData, sampleAudioUrl: url })}
-            label="ไฟล์เสียงตัวอย่าง (Preview) *"
+            label="ไฟล์เสียงตัวอย่าง (Preview)"
           />
           <DriveUpload
             value={formData.fullAudioUrl}

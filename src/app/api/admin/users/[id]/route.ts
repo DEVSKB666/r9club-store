@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { sendDiscordNotification } from '@/lib/notifications/discord';
+import { revalidatePath } from 'next/cache';
 
 // GET - Get single user
 export async function GET(
@@ -104,6 +105,8 @@ export async function PUT(
       }).catch(console.error);
     }
 
+    revalidatePath('/admin/users');
+
     return NextResponse.json({
       success: true,
       message: 'อัปเดตข้อมูลสำเร็จ',
@@ -143,6 +146,8 @@ export async function DELETE(
     await prisma.user.delete({
       where: { id: params.id },
     });
+
+    revalidatePath('/admin/users');
 
     return NextResponse.json({
       success: true,

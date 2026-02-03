@@ -33,11 +33,19 @@ declare module 'next-auth/jwt' {
 }
 
 const config: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      // เพิ่ม authorization parameters
+      authorization: {
+        params: {
+          prompt: 'none',
+        },
+      },
     }),
     Credentials({
       name: 'credentials',
@@ -58,9 +66,8 @@ const config: NextAuthConfig = {
           return null;
         }
 
-        // If user has no password (e.g. signed up with Discord previously), return null
         if (!user.password) {
-            return null;
+          return null;
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -86,7 +93,7 @@ const config: NextAuthConfig = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id!;
         token.role = user.role;
         token.creditBalance = user.creditBalance;
       }
@@ -101,23 +108,37 @@ const config: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      session.user.creditBalance = token.creditBalance;
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.creditBalance = token.creditBalance;
+      }
       return session;
+    },
+    // เพิ่ม redirect callback เพื่อป้องกัน loop
+    async redirect({ url, baseUrl }) {
+      // ถ้า url เป็น relative path (เริ่มต้นด้วย /)
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // ถ้า url เป็น same origin กับ baseUrl
+      else if (new URL(url).origin === baseUrl) return url;
+      // default redirect ไปหน้าแรก
+      return baseUrl;
     },
   },
   events: {
     async signIn({ user }) {
-      // Send Discord notification for login (dynamic import to avoid circular dependencies)
-      const { sendDiscordNotification } = await import('@/lib/notifications/discord');
-      sendDiscordNotification({
-        type: 'login',
-        data: {
-          userName: user.name || undefined,
-          userEmail: user.email || undefined,
-        },
-      }).catch(console.error);
+      try {
+        const { sendDiscordNotification } = await import('@/lib/notifications/discord');
+        await sendDiscordNotification({
+          type: 'login',
+          data: {
+            userName: user.name || undefined,
+            userEmail: user.email || undefined,
+          },
+        });
+      } catch (error) {
+        console.error('Discord notification error:', error);
+      }
     },
   },
   pages: {
@@ -126,8 +147,24 @@ const config: NextAuthConfig = {
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  debug: true,
+  // ปิด debug ใน production
+  debug: process.env.NODE_ENV === 'development',
+  // เพิ่ม cookies config สำหรับ production
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);

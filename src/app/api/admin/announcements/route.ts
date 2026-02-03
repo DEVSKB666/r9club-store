@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 // GET - Get all announcements (admin)
 export async function GET() {
@@ -47,6 +48,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePath('/admin/announcements');
+    revalidatePath('/');
+
     return NextResponse.json(announcement);
   } catch (error) {
     console.error('Error creating announcement:', error);
@@ -81,6 +85,9 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    revalidatePath('/admin/announcements');
+    revalidatePath('/');
+
     return NextResponse.json(announcement);
   } catch (error) {
     console.error('Error updating announcement:', error);
@@ -104,6 +111,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.announcement.delete({ where: { id } });
+
+    revalidatePath('/admin/announcements');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

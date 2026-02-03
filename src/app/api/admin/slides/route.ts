@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 // GET - Get all slides (admin)
 export async function GET() {
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidatePath('/admin/slides');
+    revalidatePath('/');
+
     return NextResponse.json(slide);
   } catch (error) {
     console.error('Error creating slide:', error);
@@ -83,6 +87,9 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    revalidatePath('/admin/slides');
+    revalidatePath('/');
+
     return NextResponse.json(slide);
   } catch (error) {
     console.error('Error updating slide:', error);
@@ -106,6 +113,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.slide.delete({ where: { id } });
+
+    revalidatePath('/admin/slides');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 // Default settings with groups
 const defaultSettings: Record<string, { value: string; group: string }> = {
@@ -127,6 +128,9 @@ export async function PUT(request: Request) {
     });
 
     await prisma.$transaction(updates);
+
+    revalidatePath('/admin/settings');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

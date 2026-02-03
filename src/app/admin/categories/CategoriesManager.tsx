@@ -70,13 +70,25 @@ export function CategoriesManager({ initialCategories }: CategoriesManagerProps)
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, productCount: number) => {
+    // Check if category has products
+    if (productCount > 0) {
+      swal.error(`ไม่สามารถลบหมวดหมู่ที่มีสินค้าอยู่ (${productCount} สินค้า)`);
+      return;
+    }
+
     const confirmed = await swal.confirmDelete('หมวดหมู่นี้');
     if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      
+      if (!res.ok) {
+        swal.error(data.error || 'เกิดข้อผิดพลาด');
+        return;
+      }
+      
       swal.success('ลบหมวดหมู่สำเร็จ!');
       router.refresh();
     } catch (error) {
@@ -197,9 +209,13 @@ export function CategoriesManager({ initialCategories }: CategoriesManagerProps)
                       <PencilIcon className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-red-400"
-                      disabled={cat._count.products > 0}
+                      onClick={() => handleDelete(cat.id, cat._count.products)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        cat._count.products > 0
+                          ? 'text-gray-600 cursor-not-allowed opacity-50'
+                          : 'hover:bg-white/10 text-gray-400 hover:text-red-400'
+                      }`}
+                      title={cat._count.products > 0 ? `มีสินค้า ${cat._count.products} รายการ` : 'ลบหมวดหมู่'}
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>

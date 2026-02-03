@@ -10,7 +10,8 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "build:hosting": "next build && node scripts/prepare-standalone.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^1.6.0",
@@ -19,12 +20,16 @@
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.0",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3",
     "googleapis": "^171.0.0",
+    "mime": "^4.1.0",
     "next": "^14.2.0",
     "next-auth": "^5.0.0-beta.15",
     "nodemailer": "^7.0.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^3.7.0",
     "sweetalert2": "^11.26.17",
     "zustand": "^4.5.0"
   },

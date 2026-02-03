@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -52,6 +53,7 @@ model User {
   downloads            Download[]
   topupTransactions    TopupTransaction[]
   accounts             Account[]
+  tickets              Ticket[]
 
   @@map("users")
 }
@@ -361,4 +363,34 @@ model TopupTransaction {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("topup_transactions")
+}
+
+// Support Ticket System
+model Ticket {
+  id              String   @id @default(cuid())
+  userId          String?  @map("user_id") // Optional: Guest support possible in future
+  discordThreadId String?  @map("discord_thread_id")
+  topic           String
+  status          String   @default("OPEN") // OPEN, CLOSED
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user     User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages TicketMessage[]
+
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String   @map("ticket_id")
+  sender    String   // USER, ADMIN
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_messages")
 }

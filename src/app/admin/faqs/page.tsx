@@ -272,7 +272,7 @@ export default function FAQsPage() {
 
       {!isLoading && faqs.length === 0 && !isAdding && (
         <div className="text-center py-12 text-gray-500">
-          ยังไม่มี FAQ กดปุ่ม "เพิ่ม FAQ ใหม่" เพื่อเริ่มต้น
+          ยังไม่มี FAQ กดปุ่ม &quot;เพิ่ม FAQ ใหม่&quot; เพื่อเริ่มต้น
         </div>
       )}
     </div>

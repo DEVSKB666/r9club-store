@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // PUT - Update category
 export async function PUT(
@@ -20,6 +21,9 @@ export async function PUT(
       where: { id: params.id },
       data: { name, slug, description, image },
     });
+
+    revalidatePath('/admin/categories');
+    revalidatePath('/');
 
     return NextResponse.json(category);
   } catch (error) {
@@ -55,6 +59,9 @@ export async function DELETE(
     await prisma.category.delete({
       where: { id: params.id },
     });
+
+    revalidatePath('/admin/categories');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

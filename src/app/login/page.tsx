@@ -1,17 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { MusicalNoteIcon } from '@heroicons/react/24/outline';
+import { MusicalNoteIcon, GiftIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 import swal from '@/lib/swal';
 
-export default function LoginPage() {
+interface LegacyUserData {
+  email: string;
+  name: string;
+  creditBalance: number;
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -22,12 +29,43 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSiteSettings();
 
+  // Legacy user states
+  const [showLegacyModal, setShowLegacyModal] = useState(false);
+  const [legacyUser, setLegacyUser] = useState<LegacyUserData | null>(null);
+  const [legacyStep, setLegacyStep] = useState<'info' | 'otp' | 'password'>('info');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [legacyLoading, setLegacyLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
+      // First, check if user is a legacy user
+      const checkRes = await fetch('/api/auth/check-legacy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const checkData = await checkRes.json();
+
+      // If user is a legacy user (no password), show modal
+      if (checkData.exists && checkData.isLegacy) {
+        setLegacyUser({
+          email: checkData.email,
+          name: checkData.name,
+          creditBalance: checkData.creditBalance,
+        });
+        setShowLegacyModal(true);
+        setLegacyStep('info');
+        setIsLoading(false);
+        return;
+      }
+
+      // Normal login flow
       const result = await signIn('credentials', {
         email,
         password,
@@ -50,14 +88,104 @@ export default function LoginPage() {
     }
   };
 
+  // Send OTP to legacy user
+  const handleSendOtp = async () => {
+    if (!legacyUser) return;
+    setLegacyLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/legacy-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: legacyUser.email }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        swal.success('ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว');
+        setLegacyStep('otp');
+      } else {
+        swal.error(data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (err) {
+      swal.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setLegacyLoading(false);
+    }
+  };
+
+  // Verify OTP and set new password
+  const handleResetPassword = async () => {
+    if (!legacyUser || !otp || !newPassword) return;
+
+    if (newPassword !== confirmPassword) {
+      swal.error('รหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      swal.error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    setLegacyLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/legacy-reset', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: legacyUser.email, 
+          otp, 
+          password: newPassword 
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        swal.success('ตั้งรหัสผ่านใหม่สำเร็จ! กำลังเข้าสู่ระบบ...');
+        setShowLegacyModal(false);
+
+        // Auto login with new password
+        const result = await signIn('credentials', {
+          email: legacyUser.email,
+          password: newPassword,
+          redirect: false,
+        });
+
+        if (!result?.error) {
+          router.push(callbackUrl);
+          router.refresh();
+        }
+      } else {
+        swal.error(data.error || 'รหัส OTP ไม่ถูกต้อง');
+      }
+    } catch (err) {
+      swal.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setLegacyLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
+
+
+
             {settings.site_logo && settings.site_logo !== '/logo.png' ? (
-              <img src={settings.site_logo} alt={settings.site_name} className="w-24 h-24 rounded-xl object-contain" />
+              <div className="relative w-24 h-24 mx-auto">
+                <Image 
+                  src={settings.site_logo} 
+                  alt={settings.site_name} 
+                  fill
+                  className="rounded-xl object-contain"
+                  sizes="96px"
+                />
+              </div>
             ) : (
               <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
                 <MusicalNoteIcon className="w-7 h-7 text-white" />
@@ -148,6 +276,126 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Legacy User Modal */}
+      {showLegacyModal && legacyUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl border border-white/10 p-6 w-full max-w-md relative">
+            <button 
+              onClick={() => setShowLegacyModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+
+            {/* Step: Info */}
+            {legacyStep === 'info' && (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center">
+                  <GiftIcon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">ยินดีต้อนรับกลับ! 🎉</h3>
+                <p className="text-gray-400 mb-4">
+                  พบบัญชีเดิมของคุณในระบบ
+                </p>
+                
+                <div className="bg-gray-800/50 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-400">ชื่อผู้ใช้</p>
+                  <p className="font-bold text-lg">{legacyUser.name}</p>
+                  <div className="mt-3 pt-3 border-t border-gray-700">
+                    <p className="text-sm text-gray-400">เครดิตคงเหลือ</p>
+                    <p className="font-bold text-2xl text-yellow-400">
+                      ฿{legacyUser.creditBalance.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-400 mb-4">
+                  กรุณาตั้งรหัสผ่านใหม่เพื่อเข้าสู่ระบบ<br/>
+                  เราจะส่งรหัส OTP ไปที่อีเมล <strong className="text-white">{legacyUser.email}</strong>
+                </p>
+
+                <Button 
+                  onClick={handleSendOtp} 
+                  className="w-full"
+                  isLoading={legacyLoading}
+                >
+                  ส่งรหัส OTP
+                </Button>
+              </div>
+            )}
+
+            {/* Step: OTP + Password */}
+            {legacyStep === 'otp' && (
+              <div>
+                <h3 className="text-xl font-bold mb-2 text-center">ตั้งรหัสผ่านใหม่</h3>
+                <p className="text-gray-400 text-center mb-6 text-sm">
+                  กรอกรหัส OTP ที่ส่งไปยัง {legacyUser.email}
+                </p>
+
+                <div className="space-y-4">
+                  <Input
+                    id="otp"
+                    type="text"
+                    label="รหัส OTP (6 หลัก)"
+                    placeholder="123456"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    maxLength={6}
+                  />
+
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    label="รหัสผ่านใหม่"
+                    placeholder="อย่างน้อย 6 ตัวอักษร"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    label="ยืนยันรหัสผ่าน"
+                    placeholder="กรอกรหัสผ่านอีกครั้ง"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+
+                  <Button 
+                    onClick={handleResetPassword} 
+                    className="w-full"
+                    isLoading={legacyLoading}
+                    disabled={!otp || !newPassword || !confirmPassword}
+                  >
+                    ยืนยันและเข้าสู่ระบบ
+                  </Button>
+
+                  <button 
+                    onClick={handleSendOtp}
+                    className="w-full text-sm text-gray-400 hover:text-white"
+                    disabled={legacyLoading}
+                  >
+                    ส่งรหัส OTP อีกครั้ง
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

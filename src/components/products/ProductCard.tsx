@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { PlayButton } from '@/components/player/PlayButton';
 import { useCartStore } from '@/stores/useCartStore';
 import { formatPrice, cn } from '@/lib/utils';
 import { ShoppingCartIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { playAddToCart } from '@/lib/sounds';
 
 interface ProductCardProps {
   product: {
@@ -20,13 +22,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem, isInCart } = useCartStore();
+  const [mounted, setMounted] = useState(false);
   const inCart = isInCart(product.id);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!inCart) {
       addItem(product);
+      playAddToCart();
     }
   };
 
@@ -39,8 +47,8 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.coverImage}
             alt={product.title}
             fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            unoptimized
           />
           
           {/* Overlay on hover */}
@@ -63,15 +71,15 @@ export function ProductCard({ product }: ProductCardProps) {
             
             <button
               onClick={handleAddToCart}
-              disabled={inCart}
+              disabled={mounted && inCart}
               className={cn(
                 'p-2 rounded-lg transition-all duration-200',
-                inCart
+                mounted && inCart
                   ? 'bg-green-500/20 text-green-400 cursor-default'
                   : 'bg-white/10 hover:bg-white/20 text-white'
               )}
             >
-              {inCart ? (
+              {mounted && inCart ? (
                 <CheckIcon className="w-5 h-5" />
               ) : (
                 <ShoppingCartIcon className="w-5 h-5" />

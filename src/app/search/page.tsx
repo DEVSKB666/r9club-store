@@ -78,7 +78,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                       artist: product.artist,
                       price: product.price,
                       coverImage: product.coverImage,
-                      previewUrl: product.previewUrl,
+                      sampleAudioUrl: product.previewUrl,
                     }}
                   />
                 ))}

@@ -207,7 +207,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                         artist: product.artist,
                         price: product.price,
                         coverImage: product.coverImage,
-                        previewUrl: product.previewUrl,
+                        sampleAudioUrl: product.sampleAudioUrl,
                       }}
                     />
                   ))}

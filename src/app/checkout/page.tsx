@@ -22,6 +22,7 @@ import {
   EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 import swal from '@/lib/swal';
+import { playPurchase } from '@/lib/sounds';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -122,6 +123,7 @@ export default function CheckoutPage() {
       });
 
       clearCart();
+      playPurchase(); // Victory fanfare!
       swal.success('ชำระเงินสำเร็จ!');
       setSuccess(true);
     } catch (err: Error | unknown) {

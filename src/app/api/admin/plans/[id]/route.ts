@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // PUT - Update plan
 export async function PUT(
@@ -33,6 +34,9 @@ export async function PUT(
       },
     });
 
+    revalidatePath('/admin/plans');
+    revalidatePath('/');
+
     return NextResponse.json(plan);
   } catch (error) {
     console.error('Update plan error:', error);
@@ -55,6 +59,9 @@ export async function DELETE(
     await prisma.plan.delete({
       where: { id: params.id },
     });
+
+    revalidatePath('/admin/plans');
+    revalidatePath('/');
 
     return NextResponse.json({ success: true });
   } catch (error) {

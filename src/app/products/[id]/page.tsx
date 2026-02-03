@@ -31,8 +31,32 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     orderBy: { playCount: 'desc' },
   });
 
+  const jsonLd = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.title,
+    image: [product.coverImage],
+    description: product.description || `Buy ${product.title} by ${product.artist}`,
+    sku: product.id,
+    brand: {
+      '@type': 'Brand',
+      name: product.artist
+    },
+    offers: {
+      '@type': 'Offer',
+      url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://r9club.com'}/products/${product.id}`,
+      priceCurrency: 'THB',
+      price: product.price,
+      availability: 'https://schema.org/InStock'
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="max-w-7xl mx-auto px-4">
         {/* Breadcrumb */}
         <nav className="text-sm text-gray-400 mb-6">
@@ -61,7 +85,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               fill
               className="object-cover"
               priority
-              unoptimized
             />
           </div>
 
@@ -135,7 +158,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="mt-16">
-            <h2 className="text-2xl font-bold mb-6">เพลงที่คุณอาจชอบ</h2>
+            <h2 className="text-2xl font-bold mb-6">สินค้าที่คุณอาจชอบ</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {relatedProducts.map((p) => (
                 <ProductCard

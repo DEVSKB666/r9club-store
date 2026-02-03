@@ -36,6 +36,7 @@ export default async function Footer() {
               <li><Link href="/" className="hover:text-white">หน้าแรก</Link></li>
               <li><Link href="/products" className="hover:text-white">สินค้าทั้งหมด</Link></li>
               <li><Link href="/categories" className="hover:text-white">หมวดหมู่</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-white">นโยบายความเป็นส่วนตัว</Link></li>
             </ul>
           </div>
 

@@ -15,9 +15,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Get JWT token from session - try both secrets for compatibility
+  // Force cookie checking to match auth.ts configuration
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieName = isProduction ? '__Secure-next-auth.session-token' : 'next-auth.session-token';
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+    cookieName,
+    secureCookie: isProduction,
   });
 
   const isLoggedIn = !!token;

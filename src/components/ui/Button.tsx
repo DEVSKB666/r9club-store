@@ -1,14 +1,18 @@
+'use client';
+
 import { cn } from '@/lib/utils';
 import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { playClick } from '@/lib/sounds';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  enableSound?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', isLoading, disabled, enableSound = true, onClick, children, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed';
     
     const variants = {
@@ -25,11 +29,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'px-6 py-3 text-lg',
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (enableSound && !disabled && !isLoading) {
+        playClick();
+      }
+      onClick?.(e);
+    };
+
     return (
       <button
         ref={ref}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         disabled={disabled || isLoading}
+        onClick={handleClick}
         {...props}
       >
         {isLoading && (
@@ -45,3 +57,4 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // GET - List categories
 export async function GET() {
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
     const category = await prisma.category.create({
       data: { name, slug, description, image },
     });
+
+    revalidatePath('/admin/categories');
+    revalidatePath('/');
 
     return NextResponse.json(category);
   } catch (error) {

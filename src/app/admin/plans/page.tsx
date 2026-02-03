@@ -364,7 +364,7 @@ export default function PlansPage() {
 
       {!isLoading && plans.length === 0 && !isAdding && (
         <div className="text-center py-12 text-gray-500">
-          ยังไม่มีแพ็คสมาชิก กดปุ่ม "เพิ่มแพ็คใหม่" เพื่อเริ่มต้น
+          ยังไม่มีแพ็คสมาชิก กดปุ่ม &quot;เพิ่มแพ็คใหม่&quot; เพื่อเริ่มต้น
         </div>
       )}
     </div>
